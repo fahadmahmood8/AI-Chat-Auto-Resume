@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Chat Limit Auto-Resume",
+  "version": "1.2.0",
+  "description": "Detects AI chat usage-limit waits, shows a ticking countdown bar, and clicks Continue when time is up.",
+  "browser_specific_settings": { "gecko": { "id": "chat-limit-auto-resume@local" } },
+  "permissions": ["storage"],
+  "action": { "default_title": "Chat Auto-Resume", "default_popup": "popup.html" },
+  "content_scripts": [{
+    "matches": [
+      "*://claude.ai/*",
+      "*://chatgpt.com/*",
+      "*://chat.openai.com/*",
+      "*://gemini.google.com/*",
+      "*://www.perplexity.ai/*",
+      "*://chat.deepseek.com/*",
+      "*://grok.com/*",
+      "*://copilot.microsoft.com/*"
+    ],
+    "js": ["content.js"],
+    "run_at": "document_idle"
+  }]
+}

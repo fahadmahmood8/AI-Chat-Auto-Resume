@@ -1,0 +1,11 @@
+<!doctype html><meta charset="utf-8">
+<style>body{font:13px system-ui;width:280px;padding:10px}label{display:block;margin:8px 0}button{margin:4px 4px 0 0}#out{margin-top:8px;color:#555;font-size:12px;min-height:2em}</style>
+<b>Chat Auto-Resume</b>
+<label><input type="checkbox" id="autoClick"> Auto-click Continue/Retry when time ends</label>
+<label><input type="checkbox" id="fallbackSend"> If no button: type "continue" and send</label>
+<label><input type="checkbox" id="tick"> Tick-tock sound</label>
+<label><input type="checkbox" id="debug"> Debug logging in page console (F12)</label>
+<label>Extra seconds to wait after reset: <input type="number" id="grace" min="0" max="600" style="width:60px"></label>
+<button id="test">Test 15s countdown</button><button id="scan">Scan page now</button>
+<div id="out"></div>
+<script src="popup.js"></script>
