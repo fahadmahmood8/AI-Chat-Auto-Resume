@@ -3,12 +3,12 @@
   window.__chatAutoResume = true;
   const api = globalThis.browser ?? globalThis.chrome; // Firefox or Chrome
 
-  const D = { autoClick: true, fallbackSend: false, tick: true, grace: 5, debug: true };
+  const D = { autoClick: true, fallbackSend: false, tick: true, grace: 5, debug: false };
   let S = { ...D };
   const log = (...a) => { if (S.debug) console.log('%c[Chat Auto-Resume]', 'color:#d97757;font-weight:bold', ...a); };
   const force = (...a) => console.log('%c[Chat Auto-Resume]', 'color:#d97757;font-weight:bold', ...a);
 
-  api.storage.local.get(D).then(s => { S = s; log('v1.1 active on', location.host, '| settings:', JSON.stringify(S)); });
+  api.storage.local.get(D).then(s => { S = s; log('active on', location.host, '| settings:', JSON.stringify(S)); });
   api.storage.onChanged.addListener((c) => { for (const k in c) S[k] = c[k].newValue; });
 
   const KEY = 'car:' + location.host; // per-site, survives reloads
@@ -38,7 +38,10 @@
       if (h > 23 || mi > 59) return 0;
       const now = new Date(), tgt = new Date(now);
       tgt.setHours(h, mi, 0, 0);
-      if (tgt <= now) tgt.setDate(tgt.getDate() + 1);
+      if (tgt <= now) {
+        if (now - tgt < 90 * 60e3) return 0; // time just passed: stale banner, not a new 24h wait
+        tgt.setDate(tgt.getDate() + 1);
+      }
       return tgt - now;
     }
     return 0;
@@ -85,14 +88,17 @@
 
   // ---------- state ----------
   let target = 0, total = 0, fired = false, isTest = false;
+  let armedText = '';
+  let needClear = false, handledText = '', handledAt = 0, rmTimer = null; // re-arm bookkeeping
   try {
     const s = JSON.parse(sessionStorage.getItem(KEY) || 'null');
-    if (s && s.target > Date.now() - 120e3) { target = s.target; total = s.total; log('restored countdown after reload'); }
+    if (s && s.target > Date.now() - 120e3) { target = s.target; total = s.total; armedText = s.armedText || ''; log('restored countdown after reload'); }
   } catch {}
-  const save = () => { try { target ? sessionStorage.setItem(KEY, JSON.stringify({ target, total })) : sessionStorage.removeItem(KEY); } catch {} };
+  const save = () => { try { target ? sessionStorage.setItem(KEY, JSON.stringify({ target, total, armedText })) : sessionStorage.removeItem(KEY); } catch {} };
 
   function startCountdown(ms, why) {
-    total = ms; target = Date.now() + total; fired = false; save(); ensureBar();
+    total = ms; target = Date.now() + total; fired = false; save();
+    clearTimeout(rmTimer); ensureBar(); if (fill) fill.classList.remove('done');
     log('countdown started (' + why + '):', fmt(Math.ceil(ms / 1000)));
   }
 
@@ -100,7 +106,14 @@
     if (target) return; // never reset an active countdown
     if (Date.now() < cooldownUntil) return;
     const r = scanForLimit(false);
-    if (r.ms) { isTest = false; startCountdown(r.ms + S.grace * 1000, 'detected "' + r.text + '"'); }
+    if (!r.ms) {
+      if (needClear) { needClear = false; log('limit banner gone — watching for the next one'); }
+      return;
+    }
+    // same banner we already resumed from, still on screen: don't re-arm on it
+    if (needClear && r.text === handledText && Date.now() - handledAt < 20 * 60e3) return;
+    needClear = false; isTest = false; armedText = r.text;
+    startCountdown(r.ms + S.grace * 1000, 'detected "' + r.text + '"');
   }
   let cooldownUntil = 0, timer = null;
   const obs = new MutationObserver(() => { clearTimeout(timer); timer = setTimeout(scan, 800); });
@@ -192,8 +205,10 @@
   function finish(msg) {
     log('finished:', msg);
     label.textContent = msg; fill.classList.add('done'); fill.style.width = '100%';
-    target = 0; isTest = false; save(); cooldownUntil = Date.now() + 90e3; attempts = 0;
-    setTimeout(() => host && host.remove(), 8000);
+    target = 0; isTest = false; save(); attempts = 0;
+    needClear = true; handledText = armedText; handledAt = Date.now(); cooldownUntil = Date.now() + 10e3;
+    log('watching again — a new limit message will start a new countdown');
+    clearTimeout(rmTimer); rmTimer = setTimeout(() => { if (!target && host) host.remove(); }, 8000);
   }
 
   // ---------- main loop ----------

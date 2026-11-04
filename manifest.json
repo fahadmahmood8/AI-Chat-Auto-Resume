@@ -1,23 +1,56 @@
 {
   "manifest_version": 3,
   "name": "Chat Limit Auto-Resume",
-  "version": "1.2.0",
-  "description": "Detects AI chat usage-limit waits, shows a ticking countdown bar, and clicks Continue when time is up.",
-  "browser_specific_settings": { "gecko": { "id": "chat-limit-auto-resume@local" } },
-  "permissions": ["storage"],
-  "action": { "default_title": "Chat Auto-Resume", "default_popup": "popup.html" },
-  "content_scripts": [{
-    "matches": [
-      "*://claude.ai/*",
-      "*://chatgpt.com/*",
-      "*://chat.openai.com/*",
-      "*://gemini.google.com/*",
-      "*://www.perplexity.ai/*",
-      "*://chat.deepseek.com/*",
-      "*://grok.com/*",
-      "*://copilot.microsoft.com/*"
-    ],
-    "js": ["content.js"],
-    "run_at": "document_idle"
-  }]
+  "version": "1.3.0",
+  "description": "Detects AI chat usage-limit waits, shows a countdown bar, and clicks Continue when the limit resets.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png",
+    "128": "icons/icon-128.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{31800215-bff3-4c70-89ce-166838333b8b}",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
+    },
+    "gecko_android": {
+      "strict_min_version": "142.0"
+    }
+  },
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_title": "Chat Auto-Resume",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://claude.ai/*",
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://gemini.google.com/*",
+        "https://www.perplexity.ai/*",
+        "https://chat.deepseek.com/*",
+        "https://grok.com/*",
+        "https://copilot.microsoft.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
 }

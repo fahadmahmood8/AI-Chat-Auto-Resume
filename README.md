@@ -3,7 +3,7 @@
 > A lightweight browser extension that detects usage-limit waits on AI chat sites, shows a live countdown bar, and automatically clicks **Continue** when the limit resets.
 
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue)
-![Version](https://img.shields.io/badge/version-1.2.0-orange)
+![Version](https://img.shields.io/badge/version-1.3.0-orange)
 ![Browsers](https://img.shields.io/badge/Chrome%20%7C%20Edge%20%7C%20Brave%20%7C%20Firefox-supported-brightgreen)
 ![Permissions](https://img.shields.io/badge/permissions-storage%20only-lightgrey)
 
@@ -43,7 +43,8 @@ Want another site? See [Adding a new site](#-adding-a-new-site).
 
 ## 📦 Installation
 
-The extension is not (yet) on the Chrome Web Store or Firefox Add-ons, so you install it manually from source. It takes about a minute.
+> 🛒 **Store links:** _Firefox Add-ons — coming soon_ · _Chrome Web Store — coming soon_
+> Until then, install manually from source (about a minute).
 
 ### Step 0 — Get the files
 
@@ -53,7 +54,7 @@ The extension is not (yet) on the Chrome Web Store or Firefox Add-ons, so you in
 
 **Option B: Clone**
 ```bash
-git clone https://github.com/<your-username>/AI-Chat-Auto-Resume.git
+git clone https://github.com/fahadmahmood8/AI-Chat-Auto-Resume.git
 ```
 
 > ⚠️ **Do not delete or move the folder after installing** (Chromium browsers load the extension directly from it).
@@ -65,7 +66,9 @@ AI Chat Auto-Resume/
 ├── manifest.json
 ├── content.js
 ├── popup.html
-└── popup.js
+├── popup.js
+├── icons/
+└── build.py        (optional – only for building store packages)
 ```
 
 ---
@@ -133,7 +136,7 @@ Release Firefox only permanently installs *signed* add-ons. To keep it installed
 
 #### Firefox: grant site access
 
-Firefox may not automatically grant access to the supported sites for Manifest V3 extensions. If the countdown bar never appears:
+Firefox may not automatically grant access to the supported sites for Manifest V3 extensions (requires Firefox 140 or newer). If the countdown bar never appears:
 
 1. Open `about:addons` → **Chat Limit Auto-Resume** → **Permissions** tab.
 2. Enable **Access your data for sites in the claude.ai / chatgpt.com / … domains** (or *Always allow* for all listed sites).
@@ -176,7 +179,7 @@ Click the extension icon to open the popup.
 | **Auto-click Continue/Retry when time ends** | On | Clicks the first visible Continue / Resume / Retry / Try again / Regenerate button. |
 | **If no button: type "continue" and send** | Off | Fallback after ~24 s if no button appears: types `continue` into the input and sends it. |
 | **Tick-tock sound** | On | Plays a soft tick every second while counting down. |
-| **Debug logging** | On | Prints detection details to the page console (F12). |
+| **Debug logging** | Off | Prints detection details to the page console (F12). |
 | **Extra seconds to wait after reset** | 5 | Safety buffer added to the detected wait time. |
 
 Buttons in the popup:
@@ -200,12 +203,26 @@ Countdown state is kept in `sessionStorage` per site, so a reload doesn't lose i
 
 ---
 
+## 📝 Changelog
+
+**1.3.0**
+- Keeps watching after a resume: no more blind 90-second pause. It remembers the banner it just handled and ignores only that one, so a new or changed limit starts a countdown immediately.
+- Waits for the old banner to disappear (or change) before re-arming; after 20 minutes it re-arms anyway.
+- Stale times are ignored: "until 10:00 PM" seen at 10:02 PM no longer starts a 23-hour countdown.
+- Countdown bar no longer stays green from the previous run.
+- Console shows "watching again" / "limit banner gone" when debug logging is on.
+
+**1.2.0** – Initial public release.
+
+---
+
 ## 🛠️ Troubleshooting
 
 | Problem | Fix |
 |---|---|
 | Popup says *"No reply from this tab"* | Open a supported site and **reload that tab** after installing/updating the extension. |
 | Bar never appears | Click **Scan page now**, then press `F12` → Console and look for `[Chat Auto-Resume]` messages. On Firefox, check [site access](#firefox-grant-site-access). |
+| A second limit didn't start a new countdown | After a resume the extension waits for the old banner to clear (max 20 min). Press **Scan page now** and send the console output in an issue. |
 | "could not parse a wait time" in console | The site's wording isn't recognised. Open an issue with the exact message text. |
 | Nothing is clicked when time ends | The site may use a different button label. Enable the **type "continue"** fallback, or report the button text. |
 | No tick sound | Click once anywhere on the page; browsers require a user gesture before audio. |
@@ -219,18 +236,30 @@ Countdown state is kept in `sessionStorage` per site, so a reload doesn't lose i
 Edit `manifest.json` and add a pattern to `content_scripts[0].matches`:
 
 ```json
-"*://example-chat.com/*"
+"https://example-chat.com/*"
 ```
 
 Then reload the extension from `chrome://extensions` (or `about:debugging` in Firefox) and refresh the chat tab.
 
 ---
 
+## 📦 Building store packages
+
+```bash
+python build.py
+```
+
+Creates `dist/chat-auto-resume-<version>-firefox.zip` (includes the Firefox add-on ID and data-collection declaration) and `dist/chat-auto-resume-<version>-chrome.zip`. See [`STORE_LISTING.md`](STORE_LISTING.md) for ready-to-paste store descriptions, permission justifications and reviewer notes.
+
+Optional lint for Firefox: `npx web-ext lint --source-dir .`
+
+---
+
 ## 🔐 Privacy & permissions
 
-- **Permission used:** `storage` only (to save your popup settings).
+- **Permission used:** `storage` only (to save your popup settings), plus access to the supported chat sites over HTTPS.
 - **No network requests**, analytics, or remote code.
-- Page text is read **locally** only to detect the limit notice and is never stored or sent anywhere.
+- Page text is read **locally** only to detect the limit notice and is never stored or sent anywhere. Full text: [PRIVACY.md](PRIVACY.md).
 
 ---
 
@@ -255,4 +284,4 @@ When reporting a detection problem, please include the browser, site, the exact 
 
 ## 📄 License
 
-Released under the [MIT License](LICENSE). *(Add a `LICENSE` file to your repo if you haven't already.)*
+Released under the [MIT License](LICENSE).

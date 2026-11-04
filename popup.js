@@ -1,5 +1,5 @@
 const api = globalThis.browser ?? globalThis.chrome; // Firefox or Chrome
-const D = { autoClick: true, fallbackSend: false, tick: true, grace: 5, debug: true };
+const D = { autoClick: true, fallbackSend: false, tick: true, grace: 5, debug: false };
 api.storage.local.get(D).then(s => {
   for (const k in D) {
     const el = document.getElementById(k);
